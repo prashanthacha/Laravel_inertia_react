@@ -14,7 +14,6 @@ export default function Create({post}) {
         put(route('posts.update',post));
     }
     
-
     console.log(errors);
 
     return (
@@ -31,8 +30,6 @@ export default function Create({post}) {
                     value)}
                     className={errors.body && '!ring-red-500'}
                     ></textarea>
-
-
 
                     {errors.body && <p className="error">{errors.body}</p>}
 

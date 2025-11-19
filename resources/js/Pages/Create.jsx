@@ -10,7 +10,6 @@ export default function () {
         e.preventDefault()
         post('/posts');
     }
-    
 
     console.log(errors);
 
@@ -28,9 +27,7 @@ export default function () {
                     value)}
                     className={errors.body && '!ring-red-500'}
                     ></textarea>
-
-
-
+                    
                     {errors.body && <p className="error">{errors.body}</p>}
 
                     <button className="primary-btn mt-4" disabled={processing}>Create Post</button>
