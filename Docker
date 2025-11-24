@@ -1,0 +1,53 @@
+# ----- PHP + FPM -----
+FROM php:8.2-fpm
+
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    git \
+    curl \
+    unzip \
+    libpq-dev \
+    libzip-dev \
+    zip
+
+# PHP extensions (PostgreSQL + common Laravel needs)
+RUN docker-php-ext-install pdo_pgsql pgsql mbstring zip
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Set the working directory
+WORKDIR /var/www
+
+# Copy project files
+COPY . .
+
+# ----- Install Node + Build Assets -----
+# Install Node 18 (compatible with Vite & React)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# Install JS deps & build React/Inertia assets
+RUN npm install && npm run build
+
+# ----- Install Laravel dependencies -----
+RUN composer install --no-dev --optimize-autoloader
+
+# ----- Fix Permissions -----
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# ----- Clear Laravel caches -----
+RUN php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear
+
+# Copy Nginx config
+COPY nginx.conf /etc/nginx/sites-enabled/default
+
+# Render exposes port 10000 by default, but 80 is fine
+EXPOSE 80
+
+# Run migrations on startup + start services
+CMD php artisan migrate --force && service nginx start && php-fpm
